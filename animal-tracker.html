@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animal Tracker</title>
+</head>
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Chewy&display=swap');
+
+    
+/* General Body Styling */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Chewy', cursive;
+    color: whitesmoke;
+    text-align: center;
+    min-height: 100vh;
+    height: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(to bottom, #487046, #5d8a5c, #87a885);
+    background-attachment: fixed; /* Ensures it covers the entire page */
+}
+
+/* Header */
+header {
+    text-align: center;
+    padding: 10px;
+}
+
+.logo {
+    display: block;
+    margin: 0 auto;
+    width: 250px;
+    height: auto;
+}
+
+h1 {
+    font-size: 60px;
+    font-weight: bold;
+    letter-spacing: 3px;
+    margin-bottom: 5px;
+}
+
+h2 {
+    font-size: 30px;
+    letter-spacing: 2px;
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    font-size: 32px;
+    letter-spacing: 3px;
+    margin: -10px;
+}
+
+.scalable-container {
+  transform-origin: top center; /* Ensures scaling happens from the top */
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Scale everything down for smaller screens */
+@media (max-width: 1200px) {
+  .scalable-container {
+    transform: scale(0.9);
+  }
+}
+
+@media (max-width: 1000px) {
+  .scalable-container {
+    transform: scale(0.8);
+  }
+}
+
+@media (max-width: 800px) {
+  .scalable-container {
+    transform: scale(0.7);
+  }
+}
+
+/* Layout Grid */
+.main-layout {
+    display: grid;
+    grid-template-columns: 1fr 5fr 1fr; /* 1:4:1 ratio */
+    height: auto
+    gap: 10px;
+    padding-bottom: 50px; /* Adjust as needed */
+    background: inherit; /* Uses body's background so it extends properly */
+}
+
+/* Toolbar */
+.toolbar {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: #385936;
+    font-size: 30px;
+}
+
+button {
+  background-color: #5a9367;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 0.8em;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+button:hover {
+  background-color: #487046;
+}
+select {
+  border-radius: 5px;
+  padding: 8px;
+  font-size: 0.8em;
+  border: 1px solid #ccc;
+}
+
+/* Palette & Gender Selection */
+.palette {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 5px;
+}
+
+.palette-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.gender-icons img {
+    width: 35px;
+    height: 35px;
+    cursor: pointer;
+    object-fit: contain;
+}
+
+/* Left Section - Sprite Container */
+
+    .sprite {
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+      position: absolute;
+      background-size: 1395px 4080px;
+      background-repeat: no-repeat;
+}
+.sprite-section {
+    display: flex;
+    flex-direction: column; /* Stack title and container vertically */
+    align-items: center; /* Center them horizontally */
+    margin-top: 20px; /* Space from the top */
+}
+.sprite-container {
+    left: 80px; /* Adjust if needed */
+    width: 190px; /* Adjust width */
+    height: 600px; /* Adjust height */
+    overflow-y: auto; /* Enables vertical scrolling */
+    border: 2px solid white;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.sprite-item {
+    width: 155px;
+    height: 120px;
+    background-size: 1395px 4080px;
+    cursor: grab;
+}
+
+/* Middle Section - Barns */
+    .barn {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 5px;
+      border: 2px solid white;
+      padding: 10px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    #barnContainer {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr); /* Two columns */
+      gap: 20px; /* Adds spacing between barns */
+      justify-content: center; /* Centers the barns */
+      align-items: start; /* Prevents stretching */
+      width: fit-content; /* Prevents unnecessary stretching */
+      margin: auto; /* Centers the grid */
+  }
+
+/* Cells inside barns */
+    .cell {
+      width: 155px;
+      height: 120px;
+      border: 1px solid white;
+      background-color: transparent;
+      position: relative;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    /* Gender icon always appears in the bottom right */
+    .cell .gender-icon {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      bottom: 2px;
+      right: 2px;
+      z-index: 10;
+    }
+
+/* Right Section - Barns List */
+.barns-list-container {
+    background-color: #transparent;
+    border-left: 2px solid #ddd;
+    overflow-y: auto;
+    padding: 10px;
+    margin: 15px;
+    text-align: center;
+    min-width: 200px;
+}
+
+/* List */
+#barnList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#barnList li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 100%;        /* Prevents item from stretching beyond parent */
+  overflow: hidden;       /* Avoids overflow issues */
+  padding: 4px 8px;
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  color: white;
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+#barnList li button {
+  flex-shrink: 0;         /* Prevents the button from shrinking */
+  padding: 2px 6px;
+  border: none;
+  background-color: #e57373;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+#barnList li button:hover {
+  background-color: #c0392b;
+}
+
+  </style>
+<div class="scalable-container">
+<body>
+
+    <header>
+        <h1>ANIMAL TRACKER</h1>
+        <h2 class="subtitle">FOR</h2>
+        <img src="fom_logo.png" alt="FoM Logo" class="logo">
+    </header>
+
+    <!-- Toolbar Section -->
+    <div class="toolbar">
+        <label for="barnSize">Select Barn/Coop Size:</label>
+        <select id="barnSize">
+            <option value="12">Large (12)</option>
+            <option value="8">Medium (8)</option>
+            <option value="4">Small (4)</option>
+        </select>
+        <button onclick="addBarn()">Add Barn/Coop</button>
+    </div>
+
+    <!-- Color and Gender Selection -->
+    <div class="palette">
+        <div class="palette-item">
+            <input type="color" class="color-picker" value="#FFF4B5" onchange="updatePaletteColor(this, 0)"> T 1
+            <input type="checkbox" name="tierColor" class="color-check" onclick="toggleTierColor(0)">
+        </div>
+        <div class="palette-item">
+            <input type="color" class="color-picker" value="#cfa87a" onchange="updatePaletteColor(this, 1)"> T 2
+            <input type="checkbox" name="tierColor" class="color-check" onclick="toggleTierColor(1)">
+        </div>
+        <div class="palette-item">
+            <input type="color" class="color-picker" value="#bf6d95" onchange="updatePaletteColor(this, 2)"> T 3
+            <input type="checkbox" name="tierColor" class="color-check" onclick="toggleTierColor(2)">
+        </div>
+        <div class="palette-item">
+            <input type="color" class="color-picker" value="#abc2c7" onchange="updatePaletteColor(this, 3)"> T 4
+            <input type="checkbox" name="tierColor" class="color-check" onclick="toggleTierColor(3)">
+        </div>
+        <div class="palette-item">
+            <input type="color" class="color-picker" value="#cfbf30" onchange="updatePaletteColor(this, 4)"> T 5
+            <input type="checkbox" name="tierColor" class="color-check" onclick="toggleTierColor(4)">
+        </div>
+        <div class="palette-item">
+            <input type="color" class="color-picker" value="#a596e0" onchange="updatePaletteColor(this, 5)"> T 6
+            <input type="checkbox" name="tierColor" class="color-check" onclick="toggleTierColor(5)">
+        </div>
+        <div class="palette-item gender-icons">
+            <img src="male_icon.png" onclick="toggleGender('male')">
+            <input type="checkbox" id="male-check" class="gender-check" onclick="toggleGender('male')">
+            <img src="female_icon.png" onclick="toggleGender('female')">
+            <input type="checkbox" id="female-check" class="gender-check" onclick="toggleGender('female')">
+        </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="main-layout">
+        <!-- Left Panel (Sprite Container) -->
+        <div class="sprite-section">
+    <h2>Animal Sprites</h2>
+    <div class="sprite-container" id="spriteContainer"></div>
+</div>
+
+        <!-- Middle Panel (Barns) -->
+        <div class="barns-container">
+            <h2>Your Barns and Coops</h2>
+            <div id="barnContainer"></div>
+        </div>
+
+        <!-- Right Panel (Barns List) -->
+        <div class="barns-list-container">
+            <h2>Remove List</h2>
+            <ul id="barnList"></ul>
+        </div>
+    </div>
+
+</body>
+</div>
+</html>
+
+<script>
+let spriteSheet = 'sprite-sheet.png';
+let columns = 9;
+let rows = 34;
+let spriteWidth = 155;
+let spriteHeight = 120;
+let barnCount = 0;
+
+
+function loadSprites() {
+  let container = document.getElementById("spriteContainer");
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < columns; col++) {
+      let sprite = document.createElement("div");
+      sprite.className = "sprite-item";
+      sprite.style.backgroundImage = `url(${spriteSheet})`;
+      sprite.style.backgroundPosition = `-${col * spriteWidth}px -${row * spriteHeight}px`;
+      sprite.draggable = true;
+      sprite.dataset.backgroundPosition = sprite.style.backgroundPosition;
+      sprite.ondragstart = dragStart;
+      container.appendChild(sprite);
+    }
+  }
+}
+
+function dragStart(event) {
+  event.dataTransfer.setData("backgroundPosition", event.target.dataset.backgroundPosition);
+
+  let cell = event.target.closest(".cell");
+  if (cell) {
+    // Remove the dragged animal from the cell
+    setTimeout(() => {
+      cell.innerHTML = "";
+    }, 0);
+  }
+}
+
+function allowDrop(event) {
+  event.preventDefault();
+}
+
+function drop(event) {
+  event.preventDefault();
+  let cell = event.target.closest(".cell");
+  if (!cell) return;
+
+    cell.innerHTML = "";
+
+  let existingAnimal = cell.querySelector(".sprite");
+  if (existingAnimal) {
+    existingAnimal.draggable = true;
+    existingAnimal.ondragstart = dragStart;
+  } else {
+    let img = document.createElement("div");
+    img.className = "sprite";
+    img.style.backgroundImage = `url(${spriteSheet})`;
+    img.style.backgroundPosition = event.dataTransfer.getData("backgroundPosition");
+    img.style.width = "100%";
+    img.style.height = "100%";
+    img.draggable = true;
+    img.ondragstart = dragStart;
+
+    cell.appendChild(img);
+  }
+}
+
+let activeColor = "";
+let activeGender = "";
+
+function setActiveColor(index) {
+  const colorPickers = document.querySelectorAll('.color-picker');
+  activeColor = colorPickers[index].value;
+}
+
+function updatePaletteColor(input, index) {
+  if (document.querySelectorAll('.color-check')[index].checked) {
+    activeColor = input.value;
+  }
+}
+
+function toggleTierColor(index) {
+    let checkboxes = document.querySelectorAll(".color-check");
+    
+    if (checkboxes[index].checked) {
+        // If selected, set as active and uncheck others
+        activeColor = document.querySelectorAll(".color-picker")[index].value;
+        checkboxes.forEach((cb, i) => {
+            if (i !== index) cb.checked = false;
+        });
+    } else {
+        // If deselected, remove active color
+        activeColor = "";
+    }
+
+    console.log("Active Tier Color:", activeColor);
+}
+
+function toggleGender(gender) {
+    let maleCheck = document.getElementById("male-check");
+    let femaleCheck = document.getElementById("female-check");
+
+    if (gender === "male") {
+        if (maleCheck.checked) {
+            activeGender = "male";
+            femaleCheck.checked = false; // Uncheck female if male is selected
+        } else {
+            activeGender = ""; // Deselect completely
+        }
+    } else if (gender === "female") {
+        if (femaleCheck.checked) {
+            activeGender = "female";
+            maleCheck.checked = false; // Uncheck male if female is selected
+        } else {
+            activeGender = ""; // Deselect completely
+        }
+    }
+
+    console.log("Active Gender:", activeGender);
+}
+
+function addBarn() {
+  let size = parseInt(document.getElementById("barnSize").value);
+  barnCount++;
+
+  let barnWrapper = document.createElement("div");
+  barnWrapper.className = "barn-wrapper";
+
+  let barn = document.createElement("div");
+  barn.className = "barn";
+
+let barnSizeLabel = "";
+  if (size === 12) {
+    barn.style.gridTemplateColumns = "repeat(4, 1fr)";
+    barnSizeLabel = "Large";
+  } else if (size === 8) {
+    barn.style.gridTemplateColumns = "repeat(4, 1fr)";
+    barnSizeLabel = "Medium";
+  } else if (size === 4) {
+    barn.style.gridTemplateColumns = "repeat(4, 1fr)";
+    barnSizeLabel = "Small";
+  }
+
+  for (let i = 0; i < size; i++) {
+    let cell = document.createElement("div");
+    cell.className = "cell";
+    cell.ondragover = allowDrop;
+    cell.ondrop = drop;
+    cell.onclick = function() {
+      this.style.backgroundColor = activeColor;
+      if (activeGender) {
+        const existing = this.querySelector('.gender-icon');
+        if (existing) { existing.remove(); }
+        let img = document.createElement("img");
+        img.className = "gender-icon";
+        img.src = activeGender === 'male' ? 'male_icon.png' : 'female_icon.png';
+        this.appendChild(img);
+      }
+    };
+    barn.appendChild(cell);
+  }
+
+  barnWrapper.appendChild(barn);
+  document.getElementById("barnContainer").appendChild(barnWrapper);
+
+  // Count existing barns of the same type
+  let sameTypeCount = Array.from(document.querySelectorAll("#barnList li"))
+    .filter(li => li.textContent.includes(barnSizeLabel)).length + 1;
+
+  // Add barn to the list
+  let listItem = document.createElement("li");
+  listItem.textContent = `${barnSizeLabel} ${sameTypeCount}`;
+
+  let removeBtn = document.createElement("button");
+  removeBtn.textContent = "X";
+  removeBtn.onclick = function () {
+    barnWrapper.remove();
+    listItem.remove();
+  };
+
+  listItem.appendChild(removeBtn);
+  document.getElementById("barnList").appendChild(listItem);
+}
+
+function removeBarn(barnElement, id) {
+  barnElement.remove();
+  let listItem = document.querySelector(`#barnList li[data-barn-id='${id}']`);
+  if (listItem) {
+    listItem.remove();
+  }
+}
+
+window.onload = loadSprites;
+</script>
+
+</body>
+</html>
