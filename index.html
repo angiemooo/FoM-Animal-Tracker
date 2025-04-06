@@ -171,6 +171,7 @@ select {
     border: 2px solid white;
     border-radius: 10px;
     padding: 10px;
+    margin-top: 1rem;
 }
 
 .sprite-item {
@@ -289,6 +290,7 @@ select {
             <option value="4">Small (4)</option>
         </select>
         <button onclick="addBarn()">Add Barn/Coop</button>
+        <button onclick="clearAll()">Clear All</button>
     </div>
 
     <!-- Color and Gender Selection -->
@@ -302,19 +304,19 @@ select {
             <input type="checkbox" name="tierColor" class="color-check" onclick="toggleTierColor(1)">
         </div>
         <div class="palette-item">
-            <input type="color" class="color-picker" value="#bf6d95" onchange="updatePaletteColor(this, 2)"> T 3
+            <input type="color" class="color-picker" value="#ECB1CE" onchange="updatePaletteColor(this, 2)"> T 3
             <input type="checkbox" name="tierColor" class="color-check" onclick="toggleTierColor(2)">
         </div>
         <div class="palette-item">
-            <input type="color" class="color-picker" value="#abc2c7" onchange="updatePaletteColor(this, 3)"> T 4
+            <input type="color" class="color-picker" value="#DAE1FB" onchange="updatePaletteColor(this, 3)"> T 4
             <input type="checkbox" name="tierColor" class="color-check" onclick="toggleTierColor(3)">
         </div>
         <div class="palette-item">
-            <input type="color" class="color-picker" value="#cfbf30" onchange="updatePaletteColor(this, 4)"> T 5
+            <input type="color" class="color-picker" value="#F3D230" onchange="updatePaletteColor(this, 4)"> T 5
             <input type="checkbox" name="tierColor" class="color-check" onclick="toggleTierColor(4)">
         </div>
         <div class="palette-item">
-            <input type="color" class="color-picker" value="#a596e0" onchange="updatePaletteColor(this, 5)"> T 6
+            <input type="color" class="color-picker" value="#74BDE2" onchange="updatePaletteColor(this, 5)"> T 6
             <input type="checkbox" name="tierColor" class="color-check" onclick="toggleTierColor(5)">
         </div>
         <div class="palette-item gender-icons">
@@ -330,6 +332,7 @@ select {
         <!-- Left Panel (Sprite Container) -->
         <div class="sprite-section">
     <h2>Animal Sprites</h2>
+    <div id="spriteTabs" class="tab-buttons"></div>
     <div class="sprite-container" id="spriteContainer"></div>
 </div>
 
@@ -358,11 +361,27 @@ let spriteWidth = 155;
 let spriteHeight = 120;
 let barnCount = 0;
 
+const typeIndexMap = {
+  "Cows": [0, 44],
+  "Chickens": [45, 89],
+  "Sheep": [90, 134],
+  "Capybaras": [135, 164],
+  "Alpacas": [165, 194],
+  "Rabbits": [195, 224],
+  "Horses": [225, 254],
+  "Ducks": [255, 299]
+};
 
-function loadSprites() {
-  let container = document.getElementById("spriteContainer");
-  for (let row = 0; row < rows; row++) {
-    for (let col = 0; col < columns; col++) {
+function loadSprites(category) {
+  const container = document.getElementById("spriteContainer");
+  container.innerHTML = "";
+ const [startIdx, endIdx] = typeIndexMap[category];
+
+
+  for (let i = startIdx; i <= endIdx; i++) {
+    let row = Math.floor(i / columns);
+    let col = i % columns;
+
       let sprite = document.createElement("div");
       sprite.className = "sprite-item";
       sprite.style.backgroundImage = `url(${spriteSheet})`;
@@ -373,6 +392,17 @@ function loadSprites() {
       container.appendChild(sprite);
     }
   }
+
+  function setupTabs() {
+  const tabs = Object.keys(typeIndexMap);
+  const tabContainer = document.getElementById("spriteTabs");
+
+  tabs.forEach((tab, index) => {
+    const button = document.createElement("button");
+    button.textContent = tab;
+    button.onclick = () => loadSprites(tab);
+    tabContainer.appendChild(button);
+  });
 }
 
 function dragStart(event) {
@@ -396,24 +426,31 @@ function drop(event) {
   let cell = event.target.closest(".cell");
   if (!cell) return;
 
-    cell.innerHTML = "";
+  // Remove only sprite and gender icon, not the entire cell content
+  const existingSprite = cell.querySelector(".sprite");
+  if (existingSprite) existingSprite.remove();
 
-  let existingAnimal = cell.querySelector(".sprite");
-  if (existingAnimal) {
-    existingAnimal.draggable = true;
-    existingAnimal.ondragstart = dragStart;
-  } else {
-    let img = document.createElement("div");
-    img.className = "sprite";
-    img.style.backgroundImage = `url(${spriteSheet})`;
-    img.style.backgroundPosition = event.dataTransfer.getData("backgroundPosition");
-    img.style.width = "100%";
-    img.style.height = "100%";
-    img.draggable = true;
-    img.ondragstart = dragStart;
+  const existingGender = cell.querySelector(".gender-icon");
+  if (existingGender) existingGender.remove();
 
-    cell.appendChild(img);
+  let img = document.createElement("div");
+  img.className = "sprite";
+  img.style.backgroundImage = `url(${spriteSheet})`;
+  img.style.backgroundPosition = event.dataTransfer.getData("backgroundPosition");
+  img.style.width = "100%";
+  img.style.height = "100%";
+  img.draggable = true;
+  img.ondragstart = dragStart;
+  cell.appendChild(img);
+
+  if (activeGender) {
+    let genderIcon = document.createElement("img");
+    genderIcon.className = "gender-icon";
+    genderIcon.src = activeGender === 'male' ? 'male_icon.png' : 'female_icon.png';
+    cell.appendChild(genderIcon);
   }
+
+  saveState();
 }
 
 let activeColor = "";
@@ -470,7 +507,7 @@ function toggleGender(gender) {
     console.log("Active Gender:", activeGender);
 }
 
-function addBarn() {
+function addBarn(skipSave = false) {
   let size = parseInt(document.getElementById("barnSize").value);
   barnCount++;
 
@@ -501,12 +538,15 @@ let barnSizeLabel = "";
       this.style.backgroundColor = activeColor;
       if (activeGender) {
         const existing = this.querySelector('.gender-icon');
-        if (existing) { existing.remove(); }
+          if (existing) {
+      existing.remove();
+    }
         let img = document.createElement("img");
         img.className = "gender-icon";
         img.src = activeGender === 'male' ? 'male_icon.png' : 'female_icon.png';
         this.appendChild(img);
       }
+      saveState();
     };
     barn.appendChild(cell);
   }
@@ -531,6 +571,8 @@ let barnSizeLabel = "";
 
   listItem.appendChild(removeBtn);
   document.getElementById("barnList").appendChild(listItem);
+
+  if (!skipSave) saveState();
 }
 
 function removeBarn(barnElement, id) {
@@ -540,8 +582,64 @@ function removeBarn(barnElement, id) {
     listItem.remove();
   }
 }
+function clearAll() {
+  localStorage.clear();
+  document.getElementById("barnContainer").innerHTML = "";
+  document.getElementById("barnList").innerHTML = "";
+  barnCount = 0;
+}
+  function saveState() {
+  const barns = Array.from(document.querySelectorAll('.barn')).map(barn => {
+    const cells = Array.from(barn.querySelectorAll('.cell')).map(cell => {
+      return {
+        color: cell.style.backgroundColor || null,
+        gender: cell.querySelector('.gender-icon')?.src || null,
+        sprite: cell.querySelector('.sprite')?.style.backgroundPosition || null
+      };
+    });
+    return { size: cells.length, cells };
+  });
 
-window.onload = loadSprites;
+  localStorage.setItem('barnState', JSON.stringify(barns));
+}
+
+function loadState() {
+  const saved = JSON.parse(localStorage.getItem('barnState'));
+  if (!saved) return;
+
+  saved.forEach(barnData => {
+    let size = barnData.size;
+    document.getElementById("barnSize").value = size;
+    addBarn(true); // Add barn in silent mode (true = skip save)
+    
+    const barn = document.querySelectorAll(".barn")[document.querySelectorAll(".barn").length - 1];
+    barnData.cells.forEach((data, i) => {
+      const cell = barn.children[i];
+      if (data.color) cell.style.backgroundColor = data.color;
+      if (data.gender) {
+        let img = document.createElement("img");
+        img.className = "gender-icon";
+        img.src = data.gender;
+        cell.appendChild(img);
+      }
+      if (data.sprite) {
+        let sprite = document.createElement("div");
+        sprite.className = "sprite";
+        sprite.style.backgroundImage = `url(${spriteSheet})`;
+        sprite.style.backgroundPosition = data.sprite;
+        sprite.draggable = true;
+        sprite.ondragstart = dragStart;
+        cell.appendChild(sprite);
+      }
+    });
+  });
+}
+
+window.onload = function() {
+  setupTabs();
+  loadSprites("Cows");
+  loadState();
+};
 </script>
 
 </body>
